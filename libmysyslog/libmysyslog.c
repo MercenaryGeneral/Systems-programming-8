@@ -1,36 +1,60 @@
+// libmysyslog.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 #include "libmysyslog.h"
-int mysyslog(const char* msg, int level, int driver, int format, const char* path) {
- // Реализация функции журналирования
- FILE *log_file;
- log_file = fopen(path, "a");
- if (log_file == NULL) {
- return -1;
- }
- time_t now;
- time(&now);
- char *timestamp = ctime(&now);
- timestamp[strlen(timestamp) - 1] = '\0'; // Удаление символа новой строки
- const char *level_str;
- switch (level) {
- case DEBUG: level_str = "DEBUG"; break;
- case INFO: level_str = "INFO"; break;
- case WARN: level_str = "WARN"; break;
- case ERROR: level_str = "ERROR"; break;
- case CRITICAL: level_str = "CRITICAL"; break;
- default: level_str = "UNKNOWN"; break;
- }
- if (format == 0) {
- // Текстовый формат
- fprintf(log_file, "%s %s %d %s\n", timestamp, level_str, driver, msg);
- } else {
- // Формат JSON
- fprintf(log_file, "{\"timestamp\":\"%s\",\"log_level\":\"%s\",\"driver\":%d,\"message\":\"%s\"}\n",
-timestamp, level_str, driver, msg);
- }
- fclose(log_file);
- return 0;
+
+static const char* get_level_string(LogLevel level) {
+    static const char* level_strings[] = {
+        "DEBUG",
+        "INFO",
+        "WARN",
+        "ERROR",
+        "CRITICAL"
+    };
+    
+    if (level >= LOG_DEBUG && level <= LOG_CRITICAL) {
+        return level_strings[level];
+    }
+    return "UNKNOWN";
+}
+
+static void remove_newline(char* str) {
+    size_t len = strlen(str);
+    if (len > 0 && str[len-1] == '\n') {
+        str[len-1] = '\0';
+    }
+}
+
+int mysyslog(const char* message, LogLevel level, int driver, LogFormat format, const char* path) {
+    if (message == NULL || path == NULL) {
+        return -1;
+    }
+
+    FILE* log_file = fopen(path, "a");
+    if (log_file == NULL) {
+        return -1;
+    }
+
+    // Получаем текущее время
+    time_t now;
+    time(&now);
+    char* timestamp = ctime(&now);
+    remove_newline(timestamp);
+
+    const char* level_str = get_level_string(level);
+
+    // Записываем в выбранном формате
+    if (format == LOG_FORMAT_TEXT) {
+        fprintf(log_file, "%s %s %d %s\n", timestamp, level_str, driver, message);
+    } else {
+        fprintf(log_file, 
+                "{\"timestamp\":\"%s\",\"log_level\":\"%s\",\"driver\":%d,\"message\":\"%s\"}\n",
+                timestamp, level_str, driver, message);
+    }
+
+    fclose(log_file);
+    return 0;
 }
