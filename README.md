@@ -21,6 +21,7 @@ sudo apt install ./deb/myrpc-client_1.0-1_amd64.deb
 ### Установка deb-пакета libmysyslog
 ```bash
 sudo apt install ./deb/libmysyslog_1.0-1_amd64.deb
+```
 ## Запуск сервера:
 ```bash
 sudo myrpc-server
