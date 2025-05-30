@@ -32,7 +32,7 @@ void print_usage() {
 
 int parse_args(int argc, char* argv[], ClientOptions* opts) {
     int opt;
-    opts->use_tcp = 1; // TCP ïî óìîë÷àíèþ
+    opts->use_tcp = 1; // TCP
 
     while ((opt = getopt(argc, argv, "c:h:p:sd")) != -1) {
         switch (opt) {
